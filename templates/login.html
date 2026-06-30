@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hush — Sign In</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+    .card {
+      background: #1a1a2e;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #2d2d4e;
+    }
+    .logo {
+      color: #a78bfa;
+      font-size: 1.8rem;
+      letter-spacing: 8px;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .tagline {
+      text-align: center;
+      color: #555;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      margin-bottom: 36px;
+    }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: #888;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 10px;
+      color: #e0e0ff;
+      font-size: 0.9rem;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #a78bfa; }
+    .btn {
+      width: 100%;
+      background: #a78bfa;
+      color: #0f0f1a;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+      margin-bottom: 16px;
+    }
+    .btn:hover { background: #c4b5fd; }
+    .switch-link {
+      text-align: center;
+      font-size: 0.82rem;
+      color: #555;
+    }
+    .switch-link a { color: #a78bfa; text-decoration: none; }
+    .switch-link a:hover { color: #c4b5fd; }
+    .error {
+      background: #2d1a1a;
+      border: 1px solid #7c3aed;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #f87171;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .anon-note {
+      background: #0f0f1a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.75rem;
+      color: #444;
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">hush.</div>
+    <div class="tagline">you are not alone.</div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <div class="anon-note">
+      🔒 your username doesn't have to be your real name.<br>
+      your conversations are private and anonymous.
+    </div>
+
+    <label>username</label>
+    <form method="POST" action="/login">
+      <input type="text" name="username" placeholder="any name you choose" autocomplete="off" required>
+      <label>password</label>
+      <input type="password" name="password" placeholder="your password" required>
+      <button class="btn" type="submit">enter hush</button>
+    </form>
+
+    <div class="switch-link">
+      new here? <a href="/register">create an account</a>
+    </div>
+  </div>
+</body>
+</html>

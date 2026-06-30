@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hush — Peer Rooms</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .logo { color: #a78bfa; font-size: 1.2rem; letter-spacing: 4px; }
+    .back { color: #555; text-decoration: none; font-size: 0.82rem; letter-spacing: 1px; }
+    .back:hover { color: #a78bfa; }
+
+    .hero { text-align: center; margin-bottom: 36px; }
+    .hero h2 { font-size: 1.3rem; font-weight: 300; color: #c4b5fd; letter-spacing: 1px; margin-bottom: 8px; }
+    .hero p { color: #555; font-size: 0.85rem; letter-spacing: 1px; }
+
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .room-card {
+      background: #1a1a2e;
+      border: 2px solid #2d2d4e;
+      border-radius: 16px;
+      padding: 24px 18px;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .room-card:hover { border-color: #a78bfa; transform: translateY(-2px); }
+    .room-card .icon { font-size: 1.7rem; display: block; margin-bottom: 10px; }
+    .room-card .title { color: #c4b5fd; font-size: 0.88rem; letter-spacing: 0.5px; }
+    .room-card .desc { color: #555; font-size: 0.72rem; margin-top: 4px; }
+
+    .anon-note {
+      text-align: center;
+      color: #444;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+      margin-top: 30px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <span class="logo">hush.</span>
+    <a href="/dashboard" class="back">← back</a>
+  </div>
+
+  <div class="hero">
+    <h2>you're not the only one feeling this</h2>
+    <p>pick a room. read, share, or just sit with others who get it</p>
+  </div>
+
+  <div class="rooms-grid">
+    <a href="/rooms/exam-stress" class="room-card">
+      <span class="icon">📚</span>
+      <div class="title">exam stress</div>
+      <div class="desc">pressure, deadlines, burnout</div>
+    </a>
+    <a href="/rooms/loneliness" class="room-card">
+      <span class="icon">🌙</span>
+      <div class="title">loneliness</div>
+      <div class="desc">feeling disconnected</div>
+    </a>
+    <a href="/rooms/family-pressure" class="room-card">
+      <span class="icon">🏠</span>
+      <div class="title">family pressure</div>
+      <div class="desc">expectations, conflict</div>
+    </a>
+    <a href="/rooms/heartbreak" class="room-card">
+      <span class="icon">💔</span>
+      <div class="title">heartbreak</div>
+      <div class="desc">relationships, letting go</div>
+    </a>
+    <a href="/rooms/self-doubt" class="room-card">
+      <span class="icon">🌧️</span>
+      <div class="title">self doubt</div>
+      <div class="desc">not feeling good enough</div>
+    </a>
+    <a href="/rooms/just-venting" class="room-card">
+      <span class="icon">🤍</span>
+      <div class="title">just venting</div>
+      <div class="desc">anything on your mind</div>
+    </a>
+  </div>
+
+  <p class="anon-note">
+    everything here is anonymous. no usernames are shown — just you and others who understand.
+    be kind. this is a safe space.
+  </p>
+</body>
+</html>

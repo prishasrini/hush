@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hush — How are you feeling?</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: #a78bfa;
+      letter-spacing: 2px;
+      margin-bottom: 40px;
+    }
+    .moods {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .mood-btn {
+      background: #1a1a2e;
+      border: 2px solid #2d2d4e;
+      border-radius: 16px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      width: 110px;
+    }
+    .mood-btn:hover { border-color: #a78bfa; transform: translateY(-3px); }
+    .mood-btn.selected { border-color: #a78bfa; background: #2d2048; }
+    .mood-btn .emoji { font-size: 2rem; display: block; margin-bottom: 8px; }
+    .mood-btn .label { font-size: 0.78rem; color: #888; letter-spacing: 1px; }
+
+    textarea {
+      background: #1a1a2e;
+      border: 1px solid #2d2d4e;
+      border-radius: 12px;
+      color: #e0e0ff;
+      font-size: 0.9rem;
+      padding: 14px;
+      width: 100%;
+      max-width: 420px;
+      resize: none;
+      height: 90px;
+      margin-bottom: 20px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    textarea::placeholder { color: #555; }
+    textarea:focus { outline: none; border-color: #a78bfa; }
+
+    .save-btn {
+      background: #a78bfa;
+      color: #0f0f1a;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 40px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #c4b5fd; }
+    .saved-msg {
+      margin-top: 16px;
+      color: #a78bfa;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .back {
+      position: absolute; top: 24px; left: 28px;
+      color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 1px;
+    }
+    .back:hover { color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back">← hush</a>
+  <h2>how are you feeling right now?</h2>
+
+  <div class="moods">
+    <div class="mood-btn" onclick="selectMood(this, 'great')">
+      <span class="emoji">🌸</span>
+      <span class="label">great</span>
+    </div>
+    <div class="mood-btn" onclick="selectMood(this, 'okay')">
+      <span class="emoji">🌙</span>
+      <span class="label">okay</span>
+    </div>
+    <div class="mood-btn" onclick="selectMood(this, 'low')">
+      <span class="emoji">🌧️</span>
+      <span class="label">low</span>
+    </div>
+    <div class="mood-btn" onclick="selectMood(this, 'anxious')">
+      <span class="emoji">🌊</span>
+      <span class="label">anxious</span>
+    </div>
+    <div class="mood-btn" onclick="selectMood(this, 'really bad')">
+      <span class="emoji">🖤</span>
+      <span class="label">really bad</span>
+    </div>
+  </div>
+
+  <textarea id="note" placeholder="anything you want to let out... (optional)"></textarea>
+  <button class="save-btn" onclick="saveMood()">save how i feel</button>
+  <p class="saved-msg" id="saved-msg">saved. you showed up for yourself today 🤍</p>
+
+  <script>
+    let selectedMood = null;
+
+    function selectMood(btn, mood) {
+      // remove selected highlight from all buttons
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      // highlight the one they clicked
+      btn.classList.add('selected');
+      selectedMood = mood;
+    }
+
+    async function saveMood() {
+      if (!selectedMood) {
+        alert("pick how you're feeling first 🌙");
+        return;
+      }
+      const note = document.getElementById('note').value;
+
+      // send mood + note to Flask backend
+      const result = await fetch('/api/mood', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood: selectedMood, note: note })
+      });
+
+      const data = await result.json();
+
+      // show confirmation message briefly
+      const msg = document.getElementById('saved-msg');
+      msg.style.opacity = '1';
+
+      // then redirect to dashboard after 1 second
+      setTimeout(() => { window.location.href = data.redirect; }, 1000);
+    }
+  </script>
+</body>
+</html>

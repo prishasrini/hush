@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hush — I'm here</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .logo { color: #a78bfa; font-size: 1.2rem; letter-spacing: 4px; }
+    .back { color: #555; text-decoration: none; font-size: 0.85rem; letter-spacing: 1px; }
+    .back:hover { color: #a78bfa; }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .hero h2 {
+      font-size: 1.3rem;
+      font-weight: 300;
+      color: #c4b5fd;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .hero p { color: #555; font-size: 0.85rem; letter-spacing: 1px; }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      background: #1a1a2e;
+      border: 1px solid #2d2d4e;
+      color: #888;
+      padding: 8px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .tab.active { border-color: #a78bfa; color: #a78bfa; background: #2d2048; }
+
+    .section { display: none; max-width: 520px; margin: 0 auto; }
+    .section.active { display: block; }
+
+    .breathe-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+    }
+    #breathe-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #a78bfa33, #a78bfa11);
+      border: 2px solid #a78bfa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #c4b5fd;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      transition: transform 1s ease-in-out;
+    }
+    #breathe-instruction {
+      color: #888;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #breathe-counter {
+      color: #a78bfa;
+      font-size: 2rem;
+      margin-bottom: 24px;
+    }
+    .breathe-btn {
+      background: none;
+      border: 1px solid #a78bfa;
+      color: #a78bfa;
+      padding: 10px 28px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      margin: 4px;
+      transition: all 0.2s;
+    }
+    .breathe-btn:hover { background: #a78bfa; color: #0f0f1a; }
+
+    .ground-step {
+      background: #1a1a2e;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 14px;
+      border-left: 3px solid #a78bfa;
+    }
+    .ground-step .sense {
+      font-size: 0.75rem;
+      color: #a78bfa;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .ground-step .instruction {
+      font-size: 0.95rem;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+    }
+    .ground-step .items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ground-item {
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ground-item.checked { border-color: #a78bfa; color: #a78bfa; background: #1a1030; }
+
+    .sounds-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .sound-card {
+      background: #1a1a2e;
+      border: 2px solid #2d2d4e;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sound-card:hover { border-color: #a78bfa; }
+    .sound-card.playing { border-color: #a78bfa; background: #2d2048; }
+    .sound-card .icon { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+    .sound-card .name { font-size: 0.82rem; color: #888; letter-spacing: 1px; }
+
+    .affirmation-box {
+      background: #1a1a2e;
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      margin-bottom: 20px;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #affirmation-text {
+      font-size: 1.15rem;
+      color: #c4b5fd;
+      font-weight: 300;
+      line-height: 1.7;
+      letter-spacing: 0.5px;
+      transition: opacity 0.3s;
+    }
+    .next-btn {
+      background: none;
+      border: 1px solid #a78bfa;
+      color: #a78bfa;
+      padding: 10px 28px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      display: block;
+      margin: 0 auto;
+      transition: all 0.2s;
+    }
+    .next-btn:hover { background: #a78bfa; color: #0f0f1a; }
+
+    .emergency-msg {
+      background: #1a0a2e;
+      border: 1px solid #7c3aed;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 0.92rem;
+      color: #c4b5fd;
+      line-height: 1.7;
+    }
+    .call-card {
+      background: #1a1a2e;
+      border: 2px solid #2d2d4e;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .call-card:hover { border-color: #a78bfa; }
+    .call-card .info .name { color: #c4b5fd; font-size: 0.92rem; margin-bottom: 4px; }
+    .call-card .info .detail { color: #555; font-size: 0.78rem; }
+    .call-btn {
+      background: #a78bfa;
+      color: #0f0f1a;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <span class="logo">hush.</span>
+    <a href="/dashboard" class="back">← back</a>
+  </div>
+
+  <div class="hero">
+    <h2>hey. i'm right here with you.</h2>
+    <p>pick whatever feels right</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('breathe', this)">🌬️ breathe</div>
+    <div class="tab" onclick="showTab('ground', this)">🌿 grounding</div>
+    <div class="tab" onclick="showTab('sounds', this)">🎵 sounds</div>
+    <div class="tab" onclick="showTab('affirm', this)">🤍 affirmations</div>
+    <div class="tab" onclick="showTab('emergency', this)">🆘 emergency</div>
+  </div>
+
+  <!-- BREATHE -->
+  <div class="section active" id="tab-breathe">
+    <div class="breathe-wrap">
+      <div id="breathe-circle">ready</div>
+      <div id="breathe-instruction">choose a technique below</div>
+      <div id="breathe-counter"></div>
+      <div>
+        <button class="breathe-btn" onclick="startBreath('478')">4-7-8 breathing</button>
+        <button class="breathe-btn" onclick="startBreath('box')">box breathing</button>
+        <button class="breathe-btn" onclick="stopBreath()">stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUNDING -->
+  <div class="section" id="tab-ground">
+    <div class="ground-step">
+      <div class="sense">👁️ see — name 5 things</div>
+      <div class="instruction">look around. tap each thing you can see right now.</div>
+      <div class="items">
+        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 1</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 2</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 3</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 4</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 5</div>
+      </div>
+    </div>
+    <div class="ground-step">
+      <div class="sense">👂 hear — name 4 things</div>
+      <div class="instruction">close your eyes for a moment. what do you hear?</div>
+      <div class="items">
+        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 1</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 2</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 3</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 4</div>
+      </div>
+    </div>
+    <div class="ground-step">
+      <div class="sense">🤚 touch — name 3 things</div>
+      <div class="instruction">what can you physically feel right now?</div>
+      <div class="items">
+        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 1</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 2</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 3</div>
+      </div>
+    </div>
+    <div class="ground-step">
+      <div class="sense">👃 smell — name 2 things</div>
+      <div class="instruction">breathe in. what do you smell?</div>
+      <div class="items">
+        <div class="ground-item" onclick="this.classList.toggle('checked')">smell 1</div>
+        <div class="ground-item" onclick="this.classList.toggle('checked')">smell 2</div>
+      </div>
+    </div>
+    <div class="ground-step">
+      <div class="sense">👅 taste — name 1 thing</div>
+      <div class="instruction">what do you taste right now?</div>
+      <div class="items">
+        <div class="ground-item" onclick="this.classList.toggle('checked')">taste 1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOUNDS -->
+  <div class="section" id="tab-sounds">
+    <div class="sounds-grid">
+      <div class="sound-card" onclick="playSound(this, 'rain')">
+        <span class="icon">🌧️</span>
+        <div class="name">rain</div>
+      </div>
+      <div class="sound-card" onclick="playSound(this, 'ocean')">
+        <span class="icon">🌊</span>
+        <div class="name">ocean</div>
+      </div>
+      <div class="sound-card" onclick="playSound(this, 'forest')">
+        <span class="icon">🌿</span>
+        <div class="name">forest</div>
+      </div>
+      <div class="sound-card" onclick="playSound(this, 'white')">
+        <span class="icon">☁️</span>
+        <div class="name">white noise</div>
+      </div>
+    </div>
+    <p style="text-align:center; color:#555; font-size:0.8rem; letter-spacing:1px;">
+      tap a sound to play. tap again to stop.
+    </p>
+  </div>
+
+  <!-- AFFIRMATIONS -->
+  <div class="section" id="tab-affirm">
+    <div class="affirmation-box">
+      <div id="affirmation-text">this feeling will pass. it always has.</div>
+    </div>
+    <button class="next-btn" onclick="nextAffirmation()">next →</button>
+  </div>
+
+  <!-- EMERGENCY -->
+  <div class="section" id="tab-emergency">
+    <div class="emergency-msg">
+      you matter. reaching out takes courage.<br>
+      these are free, confidential, and made for you.
+    </div>
+    <a href="tel:9152987821" class="call-card">
+      <div class="info">
+        <div class="name">iCall</div>
+        <div class="detail">for students · free · confidential</div>
+      </div>
+      <div class="call-btn">call now</div>
+    </a>
+    <a href="tel:18602662345" class="call-card">
+      <div class="info">
+        <div class="name">Vandrevala Foundation</div>
+        <div class="detail">24/7 · free · all ages</div>
+      </div>
+      <div class="call-btn">call now</div>
+    </a>
+    <a href="tel:08046110007" class="call-card">
+      <div class="info">
+        <div class="name">NIMHANS</div>
+        <div class="detail">Bangalore · mental health helpline</div>
+      </div>
+      <div class="call-btn">call now</div>
+    </a>
+  </div>
+
+  <script>
+    function showTab(name, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      el.classList.add('active');
+    }
+
+    let breathInterval = null;
+
+    function startBreath(type) {
+      stopBreath();
+      const circle = document.getElementById('breathe-circle');
+      const instruction = document.getElementById('breathe-instruction');
+      const counter = document.getElementById('breathe-counter');
+
+      const patterns = {
+        '478': [
+          { label: 'breathe in', seconds: 4, scale: 1.4 },
+          { label: 'hold', seconds: 7, scale: 1.4 },
+          { label: 'breathe out', seconds: 8, scale: 1.0 }
+        ],
+        'box': [
+          { label: 'breathe in', seconds: 4, scale: 1.4 },
+          { label: 'hold', seconds: 4, scale: 1.4 },
+          { label: 'breathe out', seconds: 4, scale: 1.0 },
+          { label: 'hold', seconds: 4, scale: 1.0 }
+        ]
+      };
+
+      const steps = patterns[type];
+      let stepIndex = 0;
+      let secondsLeft = steps[0].seconds;
+
+      function tick() {
+        const step = steps[stepIndex];
+        instruction.textContent = step.label;
+        counter.textContent = secondsLeft;
+        circle.style.transform = `scale(${step.scale})`;
+        circle.textContent = step.label;
+        secondsLeft--;
+        if (secondsLeft < 0) {
+          stepIndex = (stepIndex + 1) % steps.length;
+          secondsLeft = steps[stepIndex].seconds;
+        }
+      }
+
+      tick();
+      breathInterval = setInterval(tick, 1000);
+    }
+
+    function stopBreath() {
+      if (breathInterval) clearInterval(breathInterval);
+      const circle = document.getElementById('breathe-circle');
+      circle.style.transform = 'scale(1)';
+      circle.textContent = 'ready';
+      document.getElementById('breathe-instruction').textContent = 'choose a technique below';
+      document.getElementById('breathe-counter').textContent = '';
+    }
+
+    let audioCtx = null;
+    let currentSound = null;
+
+    function playSound(card, type) {
+      if (card.classList.contains('playing')) {
+        card.classList.remove('playing');
+        if (currentSound) { currentSound.stop(); currentSound = null; }
+        return;
+      }
+      document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('playing'));
+      if (currentSound) { currentSound.stop(); currentSound = null; }
+      card.classList.add('playing');
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const bufferSize = audioCtx.sampleRate * 3;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        if (type === 'white') {
+          data[i] = Math.random() * 2 - 1;
+        } else if (type === 'rain') {
+          data[i] = (Math.random() * 2 - 1) * 0.4;
+        } else if (type === 'ocean') {
+          data[i] = Math.sin(i * 0.001) * (Math.random() * 0.3);
+        } else if (type === 'forest') {
+          data[i] = (Math.random() * 2 - 1) * 0.2;
+        }
+      }
+
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = type === 'white' ? 2000 : 800;
+
+      source.connect(filter);
+      filter.connect(audioCtx.destination);
+      source.start();
+      currentSound = source;
+    }
+
+    const affirmations = [
+      "this feeling will pass. it always has.",
+      "you are not a burden. you are a person who is struggling, and that is okay.",
+      "you don't have to have it all figured out right now.",
+      "you've survived every hard day so far. this one too.",
+      "it's okay to rest. it's okay to not be okay.",
+      "you are allowed to take up space.",
+      "one breath at a time. one moment at a time.",
+      "you reached out. that took strength.",
+      "your feelings are valid, even when they don't make sense.",
+      "you are more than your worst days.",
+      "healing isn't linear. be gentle with yourself.",
+      "you don't have to explain yourself to anyone right now.",
+      "somewhere, someone else is getting through a night just like this.",
+      "you matter more than you know right now."
+    ];
+
+    let affirmIndex = 0;
+
+    function nextAffirmation() {
+      affirmIndex = (affirmIndex + 1) % affirmations.length;
+      const el = document.getElementById('affirmation-text');
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.textContent = affirmations[affirmIndex];
+        el.style.opacity = '1';
+      }, 300);
+    }
+  </script>
+</body>
+</html>

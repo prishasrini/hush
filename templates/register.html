@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hush — Create Account</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f0f1a;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+    .card {
+      background: #1a1a2e;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #2d2d4e;
+    }
+    .logo { color: #a78bfa; font-size: 1.8rem; letter-spacing: 8px; text-align: center; margin-bottom: 6px; }
+    .tagline { text-align: center; color: #555; font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 36px; }
+    label { display: block; font-size: 0.78rem; color: #888; letter-spacing: 1px; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 10px;
+      color: #e0e0ff;
+      font-size: 0.9rem;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #a78bfa; }
+    .btn {
+      width: 100%;
+      background: #a78bfa;
+      color: #0f0f1a;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+      margin-bottom: 16px;
+    }
+    .btn:hover { background: #c4b5fd; }
+    .switch-link { text-align: center; font-size: 0.82rem; color: #555; }
+    .switch-link a { color: #a78bfa; text-decoration: none; }
+    .error { background: #2d1a1a; border: 1px solid #7c3aed; border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: #f87171; margin-bottom: 20px; text-align: center; }
+    .anon-note { background: #0f0f1a; border-radius: 10px; padding: 12px 14px; font-size: 0.75rem; color: #444; text-align: center; margin-bottom: 24px; line-height: 1.6; }
+    .anon-id-box {
+      background: #0f0f1a;
+      border: 1px solid #2d2d4e;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.75rem;
+      color: #555;
+      text-align: center;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+    .anon-id-label { font-size: 0.7rem; color: #444; letter-spacing: 1px; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">hush.</div>
+    <div class="tagline">a safe space. just for you.</div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <div class="anon-note">
+      🔒 pick any username — it doesn't have to be your real name.<br>
+      your conversations will never be linked to your identity.
+    </div>
+
+    <form method="POST" action="/register">
+      <label>choose a username</label>
+      <input type="text" name="username" placeholder="anything you want" autocomplete="off" required>
+      <label>create a password</label>
+      <input type="password" name="password" placeholder="make it something you remember" required>
+      <label>confirm password</label>
+      <input type="password" name="confirm_password" placeholder="same as above" required>
+      <button class="btn" type="submit">create my safe space</button>
+    </form>
+
+    <div class="switch-link">
+      already have an account? <a href="/login">sign in</a>
+    </div>
+  </div>
+</body>
+</html>
