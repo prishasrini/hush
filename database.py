@@ -42,14 +42,15 @@ def init_db():
         )
     """)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS room_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            room TEXT,
-            user_id TEXT,
-            content TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+    CREATE TABLE IF NOT EXISTS room_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room TEXT,
+        user_id TEXT,
+        label TEXT,
+        content TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
 
     conn.commit()
     conn.close()

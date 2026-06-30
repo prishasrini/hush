@@ -31,25 +31,45 @@
       padding: 24px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       max-width: 680px;
       width: 100%;
       margin: 0 auto;
     }
+
+    .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; max-width: 80%; }
+    .msg-wrap.mine { align-self: flex-end; align-items: flex-end; }
+
+    .msg-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+    .msg-label {
+      font-size: 0.72rem;
+      color: #a78bfa;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .msg-wrap.mine .msg-label { color: #c4b5fd; }
+    .msg-time {
+      font-size: 0.68rem;
+      color: #444;
+    }
+
     .msg {
-      max-width: 80%;
       padding: 12px 16px;
       border-radius: 16px;
       font-size: 0.88rem;
       line-height: 1.5;
-      align-self: flex-start;
       background: #1a1a2e;
       color: #c4b5fd;
       border-bottom-left-radius: 4px;
       animation: fadeIn 0.3s ease;
     }
-    .msg.mine {
-      align-self: flex-end;
+    .msg-wrap.mine .msg {
       background: #2d2048;
       color: #e0e0ff;
       border-bottom-left-radius: 16px;
@@ -72,6 +92,38 @@
       width: 100%;
       margin: 0 auto;
     }
+
+    .label-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .label-input {
+      flex: 1;
+      background: #1a1a2e;
+      border: 1px solid #2d2d4e;
+      border-radius: 10px;
+      color: #c4b5fd;
+      font-size: 0.78rem;
+      padding: 8px 12px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .label-input::placeholder { color: #444; }
+    .label-input:focus { outline: none; border-color: #a78bfa; }
+    .randomize-btn {
+      background: none;
+      border: 1px solid #2d2d4e;
+      color: #666;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .randomize-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+
     .input-row { display: flex; gap: 10px; }
     textarea {
       flex: 1;
@@ -120,6 +172,10 @@
   </div>
 
   <div class="input-area">
+    <div class="label-row">
+      <input type="text" id="label-input" class="label-input" placeholder="post as... (leave blank for random)" maxlength="20">
+      <button class="randomize-btn" onclick="randomizeLabel()">🎲 random name</button>
+    </div>
     <div class="input-row">
       <textarea id="msg-input" placeholder="share what's on your mind..."
         onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMsg(); }"></textarea>
@@ -132,7 +188,26 @@
     const roomName = "{{ room_name }}";
     const box = document.getElementById('messages-box');
     const input = document.getElementById('msg-input');
+    const labelInput = document.getElementById('label-input');
     let myUserId = null;
+
+    const adjectives = ["quiet", "gentle", "lost", "tired", "hopeful", "curious", "calm", "wandering"];
+    const nouns = ["owl", "moon", "river", "fox", "star", "cloud", "wolf", "petal"];
+
+    function randomizeLabel() {
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const noun = nouns[Math.floor(Math.random() * nouns.length)];
+      labelInput.value = `${adj}_${noun}`;
+    }
+
+    function formatTime(isoString) {
+      const date = new Date(isoString + 'Z');
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${ampm}`;
+    }
 
     async function getMyId() {
       const res = await fetch('/api/me');
@@ -151,10 +226,24 @@
 
       box.innerHTML = '';
       messages.forEach(m => {
-        const div = document.createElement('div');
-        div.className = m.user_id === myUserId ? 'msg mine' : 'msg';
-        div.textContent = m.content;
-        box.appendChild(div);
+        const isMine = m.user_id === myUserId;
+        const wrap = document.createElement('div');
+        wrap.className = isMine ? 'msg-wrap mine' : 'msg-wrap';
+
+        const meta = document.createElement('div');
+        meta.className = 'msg-meta';
+        meta.innerHTML = `
+          <span class="msg-label">${isMine ? 'you' : m.label}</span>
+          <span class="msg-time">${formatTime(m.created_at)}</span>
+        `;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'msg';
+        bubble.textContent = m.content;
+
+        wrap.appendChild(meta);
+        wrap.appendChild(bubble);
+        box.appendChild(wrap);
       });
       box.scrollTop = box.scrollHeight;
     }
@@ -162,19 +251,21 @@
     async function sendMsg() {
       const text = input.value.trim();
       if (!text) return;
+
+      const label = labelInput.value.trim();
       input.value = '';
 
       await fetch(`/api/rooms/${roomName}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text })
+        body: JSON.stringify({ content: text, label: label })
       });
       loadMessages();
     }
 
     getMyId();
+    randomizeLabel();
     loadMessages();
-    // poll for new messages every 3 seconds
     setInterval(loadMessages, 3000);
   </script>
 </body>

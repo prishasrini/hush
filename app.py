@@ -248,7 +248,7 @@ def room_detail(room_name):
 def get_room_messages(room_name):
     conn = get_db()
     messages = conn.execute(
-        "SELECT user_id, content, created_at FROM room_messages WHERE room = ? ORDER BY created_at ASC LIMIT 100",
+        "SELECT user_id, label, content, created_at FROM room_messages WHERE room = ? ORDER BY created_at ASC LIMIT 100",
         (room_name,)
     ).fetchall()
     conn.close()
@@ -260,13 +260,21 @@ def send_room_message(room_name):
     user_id = session.get("user_id")
     data = request.get_json()
     content = data.get("content", "").strip()
+    label = data.get("label", "").strip()
+
     if not content:
         return jsonify({"error": "empty"}), 400
 
+    if not label:
+        import random
+        adjectives = ["quiet", "gentle", "lost", "tired", "hopeful", "curious", "calm", "wandering"]
+        nouns = ["owl", "moon", "river", "fox", "star", "cloud", "wolf", "petal"]
+        label = f"{random.choice(adjectives)}_{random.choice(nouns)}"
+
     conn = get_db()
     conn.execute(
-        "INSERT INTO room_messages (room, user_id, content) VALUES (?, ?, ?)",
-        (room_name, user_id, content)
+        "INSERT INTO room_messages (room, user_id, label, content) VALUES (?, ?, ?, ?)",
+        (room_name, user_id, label, content)
     )
     conn.commit()
     conn.close()
