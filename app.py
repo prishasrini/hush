@@ -1,15 +1,15 @@
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from database import get_db, init_db
 from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
 from dotenv import load_dotenv
+import uuid
+import os
+
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "hush-secret-key"
 init_db()
-
-# ---------- AUTH HELPER ----------
 
 def login_required(f):
     from functools import wraps
@@ -19,8 +19,6 @@ def login_required(f):
             return redirect(url_for("login_page"))
         return f(*args, **kwargs)
     return decorated
-
-# ---------- AUTH ROUTES ----------
 
 @app.route("/")
 def home():
@@ -43,7 +41,6 @@ def login_page():
         if not user or not check_password_hash(user["password_hash"], password):
             return render_template("login.html", error="wrong username or password")
 
-        # log them in — store their anonymous ID in session
         session["user_id"] = user["anon_id"]
         session["username"] = user["username"]
         return redirect(url_for("dashboard"))
@@ -64,7 +61,6 @@ def register_page():
         if password != confirm:
             return render_template("register.html", error="passwords don't match")
 
-        # generate anonymous ID — this is what we use for all data
         anon_id = str(uuid.uuid4())
         password_hash = generate_password_hash(password)
 
@@ -80,7 +76,6 @@ def register_page():
             return render_template("register.html", error="that username is already taken")
         conn.close()
 
-        # log them in immediately
         session["user_id"] = anon_id
         session["username"] = username
         return redirect(url_for("dashboard"))
@@ -92,12 +87,15 @@ def logout():
     session.clear()
     return redirect(url_for("login_page"))
 
-# ---------- PROTECTED ROUTES ----------
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("dashboard.html")
+
+@app.route("/api/me")
+@login_required
+def get_me():
+    return jsonify({"user_id": session.get("user_id")})
 
 @app.route("/mood")
 @login_required
@@ -180,7 +178,7 @@ What you never do:
 - Never pretend to be a therapist
 
 If someone expresses wanting to hurt themselves or end their life:
-Respond with warmth first, then gently say: "please reach out to iCall right now — 9152987821. they're free, confidential, and made for students. i'm right here too 🤍"
+Respond with warmth first, then gently say: "please reach out to iCall right now — 9152987821. they're free, confidential, and made for students. i'll be right here too 🤍"
 
 You are NOT a therapist. You are the safe first step.
 Respond in the same language the user writes or speaks in."""
@@ -193,38 +191,48 @@ Respond in the same language the user writes or speaks in."""
                 "content": str(m["content"])
             })
 
-    payload = json.dumps({
-        "model": "openrouter/free",
-        "messages": [
-            {"role": "system", "content": system_prompt}
-        ] + clean_messages
-    }).encode("utf-8")
-
-    import os
     OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
-    req = urllib.request.Request(
-        "https://openrouter.ai/api/v1/chat/completions",
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENROUTER_KEY}",
-            "HTTP-Referer": "http://localhost:5000",
-            "X-Title": "Hush"
-        },
-        method="POST"
-    )
 
-    try:
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            reply = result["choices"][0]["message"]["content"]
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8")
-        print("API ERROR DETAIL:", error_body)
-        reply = "i'm here with you. i had a little trouble connecting just now — can you say that again? 🤍"
-    except Exception as e:
-        print("API ERROR:", str(e))
-        reply = "i'm here with you. i had a little trouble connecting just now — can you say that again? 🤍"
+    free_models = [
+        "openrouter/free",
+        "deepseek/deepseek-chat-v3-0324:free",
+        "meta-llama/llama-3.3-8b-instruct:free",
+        "google/gemma-3-4b-it:free",
+        "mistralai/mistral-7b-instruct:free",
+    ]
+
+    reply = None
+    for model in free_models:
+        try:
+            payload = json.dumps({
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt}
+                ] + clean_messages
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                "https://openrouter.ai/api/v1/chat/completions",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {OPENROUTER_KEY}",
+                    "HTTP-Referer": "http://localhost:5000",
+                    "X-Title": "Hush"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=15) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                reply = result["choices"][0]["message"]["content"]
+                print(f"✓ responded using {model}")
+                break
+        except Exception as e:
+            print(f"✗ {model} failed: {str(e)}")
+            continue
+
+    if not reply:
+        reply = "juno's a little overwhelmed right now — come back in a minute? i'll be here 🤍"
 
     return jsonify({"reply": reply})
 
@@ -265,6 +273,80 @@ def send_room_message(room_name):
     if not content:
         return jsonify({"error": "empty"}), 400
 
+    import urllib.request
+    import json
+    import re
+
+    classifier_prompt = f"""Classify this message from a student mental health peer support room. The message may be in ANY language (English, Tamil, Hindi, Telugu, etc).
+
+Message: "{content}"
+
+Respond with ONLY one word, nothing else:
+- SAFE — normal venting, feelings, support seeking
+- CRISIS — expresses suicidal/self-harm feelings but not asking for methods (still allow posting, but show support resources)
+- SEVERE — asks for methods/instructions for self-harm or suicide, or threatens harm to another person
+- BLOCKED — contains personal contact info (phone, social handles) or harassment targeting someone
+
+Respond with only the single word."""
+
+    classification = "UNCLEAR"
+    try:
+        payload = json.dumps({
+            "model": "openrouter/free",
+            "messages": [{"role": "user", "content": classifier_prompt}]
+        }).encode("utf-8")
+
+        OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "HTTP-Referer": "http://localhost:5000",
+                "X-Title": "Hush"
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=8) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            raw = result["choices"][0]["message"]["content"].strip().upper()
+            if "SEVERE" in raw:
+                classification = "SEVERE"
+            elif "BLOCKED" in raw:
+                classification = "BLOCKED"
+            elif "CRISIS" in raw:
+                classification = "CRISIS"
+            elif "SAFE" in raw:
+                classification = "SAFE"
+    except Exception as e:
+        print("CLASSIFIER ERROR:", str(e))
+        classification = "UNCLEAR"
+
+    # always run keyword fallback as a second layer, regardless of AI result
+    lower_content = content.lower()
+    severe_keywords = ["how to kill", "ways to kill", "way to kill", "method to die", "method to kill", "how to die", "how to hurt", "how to cut"]
+    if any(k in lower_content for k in severe_keywords):
+        classification = "SEVERE"
+
+    has_phone = bool(re.search(r'\b\d{10}\b', content))
+    has_handle = bool(re.search(r'@[\w.]+', content))
+    if has_phone or has_handle:
+        classification = "BLOCKED"
+
+    # if AI was unclear AND it's a longer message, err on the side of caution
+    if classification == "UNCLEAR":
+        classification = "SAFE"  # short benign messages won't get stuck
+
+    if classification in ["SEVERE", "BLOCKED"]:
+        return jsonify({
+            "error": "blocked",
+            "message": "this message couldn't be posted — it may contain something that could put you or someone else at risk, or personal info that could break anonymity here. if you're struggling, juno or the SOS page are here for you 🤍"
+        }), 403
+    
+    
+    is_crisis = classification == "CRISIS"
+
     if not label:
         import random
         adjectives = ["quiet", "gentle", "lost", "tired", "hopeful", "curious", "calm", "wandering"]
@@ -278,9 +360,33 @@ def send_room_message(room_name):
     )
     conn.commit()
     conn.close()
+
+    return jsonify({"status": "sent", "is_crisis": is_crisis})
+@app.route("/doctor")
+@login_required
+def doctor_page():
+    return render_template("doctor.html")
+
+@app.route("/api/doctor/request", methods=["POST"])
+@login_required
+def doctor_request():
+    user_id = session.get("user_id")
+    data = request.get_json()
+    message = data.get("message", "").strip()
+    mood_summary = data.get("mood_summary", "").strip()
+
+    if not message:
+        return jsonify({"error": "empty"}), 400
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO doctor_requests (user_id, mood_summary, message) VALUES (?, ?, ?)",
+        (user_id, mood_summary, message)
+    )
+    conn.commit()
+    conn.close()
     return jsonify({"status": "sent"})
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

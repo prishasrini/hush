@@ -85,12 +85,47 @@
       line-height: 1.7;
     }
 
+    .safety-notice {
+      background: #2d1a1a;
+      border: 1px solid #f87171;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      color: #fca5a5;
+      text-align: center;
+      line-height: 1.6;
+      max-width: 90%;
+      margin: 0 auto;
+    }
+    .crisis-notice {
+      background: #1a0a2e;
+      border: 1px solid #7c3aed;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      color: #c4b5fd;
+      text-align: center;
+      line-height: 1.8;
+      align-self: center;
+      max-width: 90%;
+    }
+    .crisis-notice a {
+      color: #a78bfa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .crisis-notice a:hover { color: #c4b5fd; }
+
     .input-area {
       padding: 16px 20px;
       border-top: 1px solid #1a1a2e;
       max-width: 680px;
       width: 100%;
       margin: 0 auto;
+    }
+
+    #notice-anchor {
+      margin-bottom: 10px;
     }
 
     .label-row {
@@ -172,6 +207,7 @@
   </div>
 
   <div class="input-area">
+    <div id="notice-anchor"></div>
     <div class="label-row">
       <input type="text" id="label-input" class="label-input" placeholder="post as... (leave blank for random)" maxlength="20">
       <button class="randomize-btn" onclick="randomizeLabel()">🎲 random name</button>
@@ -189,7 +225,10 @@
     const box = document.getElementById('messages-box');
     const input = document.getElementById('msg-input');
     const labelInput = document.getElementById('label-input');
+    const noticeAnchor = document.getElementById('notice-anchor');
     let myUserId = null;
+    let isBlocked = false;
+    let lastMessageCount = -1;
 
     const adjectives = ["quiet", "gentle", "lost", "tired", "hopeful", "curious", "calm", "wandering"];
     const nouns = ["owl", "moon", "river", "fox", "star", "cloud", "wolf", "petal"];
@@ -218,6 +257,9 @@
     async function loadMessages() {
       const res = await fetch(`/api/rooms/${roomName}/messages`);
       const messages = await res.json();
+
+      if (messages.length === lastMessageCount) return;
+      lastMessageCount = messages.length;
 
       if (messages.length === 0) {
         box.innerHTML = '<div class="empty-state" id="empty-state">no messages yet — be the first to share 🤍</div>';
@@ -253,15 +295,62 @@
       if (!text) return;
 
       const label = labelInput.value.trim();
-      input.value = '';
 
-      await fetch(`/api/rooms/${roomName}/send`, {
+      const res = await fetch(`/api/rooms/${roomName}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text, label: label })
       });
+
+      const data = await res.json();
+
+      if (res.status === 403) {
+        showBlockedMessage(data.message);
+        isBlocked = true;
+        return;
+      }
+
+      input.value = '';
+      removeBlockedMessage();
+      lastMessageCount = -1;
+
+      if (data.is_crisis) {
+        showCrisisNudge();
+      }
+
       loadMessages();
     }
+
+    function showBlockedMessage(message) {
+      removeBlockedMessage();
+      const notice = document.createElement('div');
+      notice.className = 'safety-notice';
+      notice.id = 'active-safety-notice';
+      notice.textContent = message;
+      noticeAnchor.appendChild(notice);
+    }
+
+    function removeBlockedMessage() {
+      const existing = document.getElementById('active-safety-notice');
+      if (existing) existing.remove();
+      isBlocked = false;
+    }
+
+    function showCrisisNudge() {
+      const notice = document.createElement('div');
+      notice.className = 'crisis-notice';
+      notice.innerHTML = `
+        you don't have to carry this alone.
+        <a href="tel:9152987821">📞 call iCall — 9152987821</a> or
+        <a href="/sos">🆘 open calm-down tools</a>
+      `;
+      box.appendChild(notice);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    input.addEventListener('input', () => {
+      if (isBlocked) removeBlockedMessage();
+    });
 
     getMyId();
     randomizeLabel();
