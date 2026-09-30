@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hush — Talk to Juno</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -280,9 +281,9 @@
   <div class="chat-box" id="chat-box">
     <div class="message juno">
       hey. i'm juno. 🤍<br><br>
-      this is a safe space — no judgment, no advice unless you want it. just someone to talk to.<br><br>
+      i’m an AI companion, here to listen. i’m not a therapist or an emergency service.<br><br>
       what's on your mind?
-      <button class="speak-btn" onclick="speakText(this, `hey. i'm juno. this is a safe space — no judgment, no advice unless you want it. just someone to talk to. what's on your mind?`)">🔊 read aloud</button>
+      <button class="speak-btn" onclick="speakText(this, `hey. i'm juno. i’m an AI companion, here to listen. i’m not a therapist or an emergency service. what's on your mind?`)">🔊 read aloud</button>
     </div>
   </div>
 
@@ -291,7 +292,7 @@
     <h2>hey. i hear you.</h2>
     <p>what you're feeling is real, and you don't have to carry it alone right now. please reach out to someone who can really help.</p>
     <a href="tel:9152987821" class="crisis-call">📞 iCall — 9152987821</a>
-    <a href="tel:18602662345" class="crisis-call secondary">📞 Vandrevala — 1860-266-2345</a>
+    <a href="tel:+919999666555" class="crisis-call secondary">📞 Vandrevala — 9999 666 555</a>
     <a href="/sos" class="crisis-call secondary">🆘 open calm-down tools</a>
     <div class="crisis-dismiss" onclick="dismissCrisis()">i'm safe, just needed to express myself</div>
   </div>
@@ -385,7 +386,8 @@
     function addMessage(role, content) {
       const div = document.createElement('div');
       div.className = `message ${role}`;
-      div.innerHTML = content.replace(/\n/g, '<br>');
+      div.textContent = content;
+      div.style.whiteSpace = 'pre-wrap';
 
       // add speak button to juno messages
       if (role === 'juno') {

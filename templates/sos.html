@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hush — I'm here</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hush — Breathing room</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -230,39 +231,111 @@
       font-weight: 600;
       white-space: nowrap;
     }
+    .hero p,.back,.sound-card .name,.call-card .info .detail { color:#b5b5cf; }
+    button,select,input { font:inherit; }
+    button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible { outline:3px solid #c4b5fd; outline-offset:4px; }
+    button:disabled { opacity:.5; cursor:default; }
+    .help-link { text-align:center; margin-bottom:24px; } .help-link a { color:#c4b5fd; }
+    .breath-settings { display:grid; gap:10px; padding:20px; background:#1a1a2e; border-radius:16px; }
+    .breath-settings label { color:#c7c7de; } select { background:#0f0f1a; color:#e0e0ff; border:1px solid #8070ae; border-radius:8px; padding:12px; width:100%; }
+    .breath-stage { position:relative; height:240px; width:240px; display:grid; place-items:center; }
+    #breathe-circle { margin:0; background:radial-gradient(circle,#a78bfa55,#a78bfa11); transition:transform 4s linear; box-shadow:0 0 45px #a78bfa22; }
+    #breathe-counter { position:absolute; margin:0; color:#e0e0ff; }
+    #breathe-instruction { color:#e0e0ff; min-height:44px; line-height:1.5; }
+    #breath-progress { color:#b5b5cf; margin-bottom:16px; }
+    .comfort-note { margin-top:20px; color:#b5b5cf; line-height:1.7; text-align:center; }
+    .ground-item { color:#b5b5cf; } .sound-card { color:#e0e0ff; }
+    .sound-controls { display:grid; gap:12px; text-align:center; color:#b5b5cf; }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; } #breathe-circle { transform:none !important; } }
+    @media (max-width:400px) { body { padding:20px 12px; } .tab { letter-spacing:0; padding:10px 12px; } }
+
+    .breath-options { background:#1a1a2e; border:1px solid #393451; border-radius:16px; }
+    .breath-options summary { cursor:pointer; color:#c4b5fd; padding:16px 20px; }
+    .breath-options summary:focus-visible { outline:3px solid #c4b5fd; border-radius:16px; }
+    .appearance-option { display:flex; align-items:center; gap:10px; color:#c7c7de; padding:8px 20px; }
+    .appearance-option:last-child { padding-bottom:20px; }
+    .appearance-option input { accent-color:#b5a0ff; width:18px; height:18px; }
+    .breath-scene { position:relative; isolation:isolate; width:100%; max-width:440px; aspect-ratio:1; overflow:hidden; border-radius:28px; background:radial-gradient(ellipse at 50% 48%,#252447 0%,#15172a 50%,#101220 100%); border:1px solid #34324b; }
+    .scene-haze { position:absolute; inset:15%; border-radius:50%; background:radial-gradient(circle,#9d8fe528,transparent 65%); opacity:.4; transition:opacity 4s ease; pointer-events:none; }
+    [data-phase="in"] .scene-haze { opacity:1; }
+    .breath-stage { position:absolute; inset:0; width:auto; height:auto; }
+    #breathe-circle { width:152px; height:152px; padding:12px; cursor:pointer; border:2px solid #b6a6fc; background:radial-gradient(circle,#b1a3fb08 50%,#ad9dfa22 80%,#a3adff30); box-shadow:0 0 18px #a78bfa50,inset 0 0 22px #a5b8ff18; transition:transform 4s linear,box-shadow 4s ease; }
+    #breathe-circle::before { content:""; position:absolute; inset:-9px; border:1px solid #a7c2fa30; border-radius:50%; pointer-events:none; }
+    #breathe-circle { position:relative; }
+    [data-phase="in"] #breathe-circle { box-shadow:0 0 32px #a78bfa66,inset 0 0 25px #a5b8ff25; }
+    .ring-text { color:#e4ddff; font-size:.85rem; letter-spacing:1px; pointer-events:none; }
+    #breathe-counter { position:static; color:#c4b5fd; margin:14px 0 0; font-size:1.2rem; }
+    #breathe-instruction { margin-top:24px; min-height:28px; font-size:1.05rem; letter-spacing:1px; }
+    #star-status { max-width:360px; color:#b5b5cf; font-size:.8rem; line-height:1.6; text-align:center; margin:0 10px 16px; }
+    .constellation-paths { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    .constellation-line { stroke:#a3b2e3; stroke-width:.2; opacity:0; transition:opacity 2s ease; }
+    .constellation-line.visible { opacity:.25; }
+    .constellation-star { position:absolute; transform:translate(-50%,-50%); width:44px; height:44px; border:0; padding:0; border-radius:50%; cursor:pointer; background:transparent; color:#d3d6ff; }
+    .constellation-star[hidden],#breathe-counter[hidden] { display:none; }
+    .constellation-star span { position:absolute; left:18px; top:18px; width:8px; height:8px; border-radius:50%; background:#d3d6ff; box-shadow:0 0 12px 3px #b3acfa65; }
+    .constellation-star::after { content:""; position:absolute; inset:6px; border:1px solid #b2affc55; border-radius:50%; opacity:0; }
+    .constellation-star.bloom::after { animation:light-bloom 2.4s ease-out; }
+    @keyframes light-bloom { 0% { transform:scale(.4);opacity:0; } 30% { opacity:.6; } 100% { transform:scale(1.25);opacity:0; } }
+    .breath-scene.still #breathe-circle { transform:none !important; box-shadow:0 0 18px #a78bfa50; transition:none; }
+    .breath-scene.still .scene-haze { opacity:.4; transition:none; }
+    .breath-scene.still .constellation-star::after { animation:none; }
+    .breath-scene.still .constellation-line { transition:none; }
+    @media(prefers-reduced-motion:reduce) { .constellation-star::after { animation:none !important; } }
+    @media(max-width:400px) { #breathe-circle { width:136px; height:136px; } .ring-text { font-size:.78rem; } }
   </style>
 </head>
 <body>
 
   <div class="top">
     <span class="logo">hush.</span>
-    <a href="/dashboard" class="back">← back</a>
+    <a href="{{ '/dashboard' if session.get('user_id') else '/login' }}" class="back">← back</a>
   </div>
 
   <div class="hero">
-    <h2>hey. i'm right here with you.</h2>
-    <p>pick whatever feels right</p>
+    <h2>a little room to breathe.</h2>
+    <p>a quiet pause, at your own pace. no login needed.</p>
   </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="showTab('breathe', this)">🌬️ breathe</div>
-    <div class="tab" onclick="showTab('ground', this)">🌿 grounding</div>
-    <div class="tab" onclick="showTab('sounds', this)">🎵 sounds</div>
-    <div class="tab" onclick="showTab('affirm', this)">🤍 affirmations</div>
-    <div class="tab" onclick="showTab('emergency', this)">🆘 emergency</div>
+    <button type="button" class="tab active" aria-pressed="true" onclick="showTab('breathe', this)">🌬️ breathe</button>
+    <button type="button" class="tab" aria-pressed="false" onclick="showTab('ground', this)">🌿 grounding</button>
+    <button type="button" class="tab" aria-pressed="false" onclick="showTab('sounds', this)">🎵 sounds</button>
+    <button type="button" class="tab" aria-pressed="false" onclick="showTab('affirm', this)">🤍 affirmations</button>
+    <button type="button" class="tab" aria-pressed="false" onclick="showTab('emergency', this)">🆘 emergency</button>
   </div>
 
+  <p class="help-link"><a href="/doctor">Need human support? View support contacts →</a></p>
   <!-- BREATHE -->
   <div class="section active" id="tab-breathe">
+    <details class="breath-options"><summary>pace &amp; appearance</summary>
+    <div class="breath-settings">
+      <label for="breath-pace">breathing pace</label>
+      <select id="breath-pace"><option value="gentle">gentle · 4 in / 6 out · no holds</option><option value="box">box · 4 in / 4 hold / 4 out / 4 hold</option><option value="478">4–7–8 · includes a longer hold</option></select>
+      <label for="breath-rounds">session length</label>
+      <select id="breath-rounds"><option value="4">4 rounds</option><option value="8">8 rounds</option><option value="12">12 rounds</option></select>
+    </div>
+      <label class="appearance-option"><input type="checkbox" id="breath-still"> still mode</label>
+      <label class="appearance-option"><input type="checkbox" id="breath-numbers"> show countdown</label>
+    </details>
     <div class="breathe-wrap">
-      <div id="breathe-circle">ready</div>
-      <div id="breathe-instruction">choose a technique below</div>
-      <div id="breathe-counter"></div>
-      <div>
-        <button class="breathe-btn" onclick="startBreath('478')">4-7-8 breathing</button>
-        <button class="breathe-btn" onclick="startBreath('box')">box breathing</button>
-        <button class="breathe-btn" onclick="stopBreath()">stop</button>
+      <div class="breath-scene" id="breath-scene" data-phase="rest">
+        <div class="scene-haze" aria-hidden="true"></div>
+        <svg class="constellation-paths" viewBox="0 0 100 100" aria-hidden="true"><line class="constellation-line" x1="16" y1="28" x2="29" y2="14"/><line class="constellation-line" x1="29" y1="14" x2="49" y2="10"/><line class="constellation-line" x1="49" y1="10" x2="72" y2="16"/><line class="constellation-line" x1="72" y1="16" x2="88" y2="32"/><line class="constellation-line" x1="88" y1="32" x2="90" y2="57"/><line class="constellation-line" x1="90" y1="57" x2="78" y2="79"/><line class="constellation-line" x1="78" y1="79" x2="56" y2="89"/><line class="constellation-line" x1="56" y1="89" x2="31" y2="85"/><line class="constellation-line" x1="31" y1="85" x2="13" y2="68"/><line class="constellation-line" x1="13" y1="68" x2="9" y2="48"/><line class="constellation-line" x1="9" y1="48" x2="42" y2="94"/></svg>
+        <div class="breath-stage">
+          <button type="button" id="breathe-circle" aria-label="Start breathing"><span class="ring-text" id="ring-label" aria-hidden="true">tap to begin</span></button>
+        </div>
+        <button type="button" class="constellation-star" style="left:16%;top:28%" aria-label="Let light 1 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:29%;top:14%" aria-label="Let light 2 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:49%;top:10%" aria-label="Let light 3 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:72%;top:16%" aria-label="Let light 4 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:88%;top:32%" aria-label="Let light 5 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:90%;top:57%" aria-label="Let light 6 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:78%;top:79%" aria-label="Let light 7 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:56%;top:89%" aria-label="Let light 8 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:31%;top:85%" aria-label="Let light 9 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:13%;top:68%" aria-label="Let light 10 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:9%;top:48%" aria-label="Let light 11 glow" hidden><span aria-hidden="true"></span></button><button type="button" class="constellation-star" style="left:42%;top:94%" aria-label="Let light 12 glow" hidden><span aria-hidden="true"></span></button>
       </div>
+      <div id="breathe-counter" aria-hidden="true" hidden></div>
+      <p id="breathe-instruction" role="status">begin whenever you feel ready</p>
+      <p id="breath-progress">no rush, no score</p>
+      <p id="star-status">a little light settles here after each round. no need to touch or keep pace perfectly.</p>
+      <div class="breath-controls">
+        <button class="breathe-btn" id="breath-start">start</button>
+        <button class="breathe-btn" id="breath-pause" disabled>pause</button>
+        <button class="breathe-btn" id="breath-reset">reset</button>
+      </div>
+      <p class="comfort-note">Breathe gently rather than forcing deep breaths. Skip holds or use your own pace. If you feel dizzy or uncomfortable, stop and return to normal breathing. Grounding is another option.</p>
     </div>
   </div>
 
@@ -272,45 +345,45 @@
       <div class="sense">👁️ see — name 5 things</div>
       <div class="instruction">look around. tap each thing you can see right now.</div>
       <div class="items">
-        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 1</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 2</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 3</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 4</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">thing 5</div>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 1</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 2</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 3</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 4</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 5</button>
       </div>
     </div>
     <div class="ground-step">
       <div class="sense">👂 hear — name 4 things</div>
       <div class="instruction">close your eyes for a moment. what do you hear?</div>
       <div class="items">
-        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 1</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 2</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 3</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">sound 4</div>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 1</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 2</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 3</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 4</button>
       </div>
     </div>
     <div class="ground-step">
       <div class="sense">🤚 touch — name 3 things</div>
       <div class="instruction">what can you physically feel right now?</div>
       <div class="items">
-        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 1</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 2</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">touch 3</div>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 1</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 2</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 3</button>
       </div>
     </div>
     <div class="ground-step">
       <div class="sense">👃 smell — name 2 things</div>
       <div class="instruction">breathe in. what do you smell?</div>
       <div class="items">
-        <div class="ground-item" onclick="this.classList.toggle('checked')">smell 1</div>
-        <div class="ground-item" onclick="this.classList.toggle('checked')">smell 2</div>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">smell 1</button>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">smell 2</button>
       </div>
     </div>
     <div class="ground-step">
       <div class="sense">👅 taste — name 1 thing</div>
       <div class="instruction">what do you taste right now?</div>
       <div class="items">
-        <div class="ground-item" onclick="this.classList.toggle('checked')">taste 1</div>
+        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">taste 1</button>
       </div>
     </div>
   </div>
@@ -318,32 +391,28 @@
   <!-- SOUNDS -->
   <div class="section" id="tab-sounds">
     <div class="sounds-grid">
-      <div class="sound-card" onclick="playSound(this, 'rain')">
+      <button class="sound-card" aria-pressed="false" onclick="playSound(this, 'rain')">
         <span class="icon">🌧️</span>
-        <div class="name">rain</div>
-      </div>
-      <div class="sound-card" onclick="playSound(this, 'ocean')">
+        <span class="name">soft noise</span></button>
+      <button class="sound-card" aria-pressed="false" onclick="playSound(this, 'ocean')">
         <span class="icon">🌊</span>
-        <div class="name">ocean</div>
-      </div>
-      <div class="sound-card" onclick="playSound(this, 'forest')">
+        <span class="name">wave-like noise</span></button>
+      <button class="sound-card" aria-pressed="false" onclick="playSound(this, 'forest')">
         <span class="icon">🌿</span>
-        <div class="name">forest</div>
-      </div>
-      <div class="sound-card" onclick="playSound(this, 'white')">
+        <span class="name">low noise</span></button>
+      <button class="sound-card" aria-pressed="false" onclick="playSound(this, 'white')">
         <span class="icon">☁️</span>
-        <div class="name">white noise</div>
-      </div>
+        <span class="name">white noise</span></button>
     </div>
     <p style="text-align:center; color:#555; font-size:0.8rem; letter-spacing:1px;">
-      tap a sound to play. tap again to stop.
+      Generated sound textures, not nature recordings. Sound is off until you choose it.
     </p>
+  <div class="sound-controls"><label for="sound-volume">sound volume</label><input id="sound-volume" type="range" min="0" max="0.3" step="0.01" value="0.08"><button class="breathe-btn" onclick="stopSound()">stop sound</button><p id="sound-status" role="status"></p></div>
   </div>
-
   <!-- AFFIRMATIONS -->
   <div class="section" id="tab-affirm">
     <div class="affirmation-box">
-      <div id="affirmation-text">this feeling will pass. it always has.</div>
+      <div id="affirmation-text">you can take this moment one small step at a time.</div>
     </div>
     <button class="next-btn" onclick="nextAffirmation()">next →</button>
   </div>
@@ -352,105 +421,69 @@
   <div class="section" id="tab-emergency">
     <div class="emergency-msg">
       you matter. reaching out takes courage.<br>
-      these are free, confidential, and made for you.
+      For immediate danger, contact your local emergency services.<br>These support contacts are based in India. Hush is not an emergency service.
     </div>
     <a href="tel:9152987821" class="call-card">
       <div class="info">
         <div class="name">iCall</div>
-        <div class="detail">for students · free · confidential</div>
+        <div class="detail">9152987821 · see current hours on the provider website</div>
       </div>
       <div class="call-btn">call now</div>
     </a>
-    <a href="tel:18602662345" class="call-card">
+    <a href="tel:+919999666555" class="call-card">
       <div class="info">
         <div class="name">Vandrevala Foundation</div>
-        <div class="detail">24/7 · free · all ages</div>
+        <div class="detail">9999 666 555 · 24/7 helpline</div>
       </div>
       <div class="call-btn">call now</div>
     </a>
-    <a href="tel:08046110007" class="call-card">
-      <div class="info">
-        <div class="name">NIMHANS</div>
-        <div class="detail">Bangalore · mental health helpline</div>
-      </div>
-      <div class="call-btn">call now</div>
-    </a>
+    <p style="color:#c7c7de;line-height:1.7;margin:16px 0">Check details and opening hours: <a href="https://icallhelpline.org/" target="_blank" rel="noopener noreferrer" style="color:#c4b5fd">iCall</a> · <a href="https://www.vandrevalafoundation.com/free-counseling/contact-us" target="_blank" rel="noopener noreferrer" style="color:#c4b5fd">Vandrevala Foundation</a>. Calling uses your phone service and the provider's privacy policy applies.</p>
+
+
   </div>
 
+  <script src="{{ url_for('static', filename='breathing.js') }}"></script>
   <script>
     function showTab(name, el) {
+      stopBreath();
+      stopSound();
+      document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-pressed', 'false'));
+      el.setAttribute('aria-pressed', 'true');
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById('tab-' + name).classList.add('active');
       el.classList.add('active');
     }
 
-    let breathInterval = null;
-
-    function startBreath(type) {
-      stopBreath();
-      const circle = document.getElementById('breathe-circle');
-      const instruction = document.getElementById('breathe-instruction');
-      const counter = document.getElementById('breathe-counter');
-
-      const patterns = {
-        '478': [
-          { label: 'breathe in', seconds: 4, scale: 1.4 },
-          { label: 'hold', seconds: 7, scale: 1.4 },
-          { label: 'breathe out', seconds: 8, scale: 1.0 }
-        ],
-        'box': [
-          { label: 'breathe in', seconds: 4, scale: 1.4 },
-          { label: 'hold', seconds: 4, scale: 1.4 },
-          { label: 'breathe out', seconds: 4, scale: 1.0 },
-          { label: 'hold', seconds: 4, scale: 1.0 }
-        ]
-      };
-
-      const steps = patterns[type];
-      let stepIndex = 0;
-      let secondsLeft = steps[0].seconds;
-
-      function tick() {
-        const step = steps[stepIndex];
-        instruction.textContent = step.label;
-        counter.textContent = secondsLeft;
-        circle.style.transform = `scale(${step.scale})`;
-        circle.textContent = step.label;
-        secondsLeft--;
-        if (secondsLeft < 0) {
-          stepIndex = (stepIndex + 1) % steps.length;
-          secondsLeft = steps[stepIndex].seconds;
-        }
-      }
-
-      tick();
-      breathInterval = setInterval(tick, 1000);
-    }
-
-    function stopBreath() {
-      if (breathInterval) clearInterval(breathInterval);
-      const circle = document.getElementById('breathe-circle');
-      circle.style.transform = 'scale(1)';
-      circle.textContent = 'ready';
-      document.getElementById('breathe-instruction').textContent = 'choose a technique below';
-      document.getElementById('breathe-counter').textContent = '';
-    }
-
     let audioCtx = null;
     let currentSound = null;
+    let soundGain = null;
+    let soundGeneration = 0;
+    function stopSound() {
+      soundGeneration++;
+      if (currentSound) { currentSound.stop(); currentSound.disconnect(); currentSound = null; }
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
+      soundGain = null;
+      document.querySelectorAll('.sound-card').forEach(c => { c.classList.remove('playing'); c.setAttribute('aria-pressed', 'false'); });
+    }
+    document.getElementById('sound-volume').addEventListener('input', e => {
+      if (soundGain) soundGain.gain.value = Number(e.target.value);
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopSound(); });
+    window.addEventListener('pagehide', stopSound);
 
-    function playSound(card, type) {
-      if (card.classList.contains('playing')) {
-        card.classList.remove('playing');
-        if (currentSound) { currentSound.stop(); currentSound = null; }
-        return;
-      }
-      document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('playing'));
-      if (currentSound) { currentSound.stop(); currentSound = null; }
-      card.classList.add('playing');
-
+    async function playSound(card, type) {
+      const wasPlaying = card.classList.contains('playing');
+      stopSound();
+      if (wasPlaying) return;
+      try {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const context = audioCtx;
+      const generation = soundGeneration;
+      await context.resume();
+      if (generation !== soundGeneration || context !== audioCtx) return;
+      card.classList.add('playing'); card.setAttribute('aria-pressed', 'true');
+      document.getElementById('sound-status').textContent = '';
       const bufferSize = audioCtx.sampleRate * 3;
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -476,16 +509,20 @@
       filter.frequency.value = type === 'white' ? 2000 : 800;
 
       source.connect(filter);
-      filter.connect(audioCtx.destination);
+      soundGain = audioCtx.createGain();
+      soundGain.gain.value = Number(document.getElementById('sound-volume').value);
+      filter.connect(soundGain);
+      soundGain.connect(audioCtx.destination);
       source.start();
       currentSound = source;
+      } catch (_) { stopSound(); document.getElementById('sound-status').textContent = 'Sound could not start. You can still use the other tools.'; }
     }
 
     const affirmations = [
-      "this feeling will pass. it always has.",
+      "you can take this moment one small step at a time.",
       "you are not a burden. you are a person who is struggling, and that is okay.",
       "you don't have to have it all figured out right now.",
-      "you've survived every hard day so far. this one too.",
+      "you don't have to solve everything in this moment.",
       "it's okay to rest. it's okay to not be okay.",
       "you are allowed to take up space.",
       "one breath at a time. one moment at a time.",

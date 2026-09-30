@@ -46,7 +46,7 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(client.post("/register", data=form).status_code, 302)
         self.assertEqual(client.post("/api/mood", json={"mood": "okay", "note": "test"}).status_code, 200)
         self.assertEqual(len(client.get("/api/mood/history").get_json()), 1)
-        self.assertEqual(client.post("/api/doctor/request", json={"message": "test request"}).status_code, 200)
+        self.assertEqual(client.post("/api/doctor/request", json={"message": "test request"}).status_code, 503)
         client.get("/logout")
         self.assertEqual(client.get("/api/mood/history").status_code, 302)
         self.assertIn(b"wrong username", client.post("/login", data={"username": "alice", "password": "wrong"}).data)

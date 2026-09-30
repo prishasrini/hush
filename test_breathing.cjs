@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const {BreathSession} = require('./static/breathing.js');
+const steps = [{label:'in',seconds:4}, {label:'out',seconds:6}];
+let time = 0;
+let s = new BreathSession(steps, 2, () => time);
+assert.equal(s.snapshot().seconds, 4);
+time = 3999; assert.equal(s.snapshot().index, 0);
+time = 4000; assert.equal(s.snapshot().index, 1); assert.equal(s.snapshot().seconds, 6);
+time = 10000; assert.equal(s.snapshot().round, 2);
+time = 20000; assert.equal(s.snapshot().done, true);
+time = 0; s = new BreathSession(steps, 2, () => time);
+time = 1500; s.pause();
+time = 50000; assert.equal(s.snapshot().remaining, 2500);
+s.resume(); time = 52499; assert.equal(s.snapshot().index, 0);
+time = 52500; assert.equal(s.snapshot().index, 1);
+time = 0; s = new BreathSession(steps, 4, () => time);
+time = 33000; assert.equal(s.snapshot().round, 4); assert.equal(s.snapshot().index, 0);
+console.log('Breathing timing, delayed frames, pause and completion checks passed');

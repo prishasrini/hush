@@ -16,6 +16,7 @@ if not session_secret and os.environ.get("RENDER"):
     raise RuntimeError("Set SECRET_KEY in Render environment settings before deploying")
 app.secret_key = session_secret or secrets.token_hex(32)
 app.config.update(
+    MAX_CONTENT_LENGTH=64 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
@@ -207,9 +208,9 @@ What you never do:
 - Never pretend to be a therapist
 
 If someone expresses wanting to hurt themselves or end their life:
-Respond with warmth first, then gently say: "please reach out to iCall right now — 9152987821. they're free, confidential, and made for students. i'll be right here too 🤍"
+Respond with warmth. Encourage immediate local emergency help if they are in immediate danger and contacting someone they trust. For India, offer Vandrevala Foundation on +91 9999 666 555 (24/7) or iCall on 9152987821 during its published hours. Do not promise that anyone will answer immediately. For other countries, ask their country and point to local emergency services.
 
-You are NOT a therapist. You are the safe first step.
+You are an AI companion, not a human, therapist, or emergency service. Never claim to guarantee safety.
 Respond in the same language the user writes or speaks in."""
 
     clean_messages = []
@@ -266,7 +267,6 @@ Respond in the same language the user writes or speaks in."""
     return jsonify({"reply": reply})
 
 @app.route("/sos")
-@login_required
 def sos():
     return render_template("sos.html")
 
@@ -285,19 +285,26 @@ def room_detail(room_name):
 def get_room_messages(room_name):
     conn = get_db()
     messages = conn.execute(
-        "SELECT user_id, label, content, created_at FROM room_messages WHERE room = ? ORDER BY created_at ASC LIMIT 100",
+        "SELECT user_id, label, content, created_at FROM room_messages WHERE room = ? ORDER BY id DESC LIMIT 100",
         (room_name,)
     ).fetchall()
     conn.close()
-    return jsonify([dict(m) for m in messages])
+    return jsonify([{
+        "label": m["label"], "content": m["content"], "created_at": m["created_at"],
+        "is_mine": m["user_id"] == session["user_id"],
+    } for m in reversed(messages)])
 
 @app.route("/api/rooms/<room_name>/send", methods=["POST"])
 @login_required
 def send_room_message(room_name):
     user_id = session.get("user_id")
-    data = request.get_json()
-    content = data.get("content", "").strip()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("content"), str) or not isinstance(data.get("label", ""), str):
+        return jsonify({"error": "invalid message"}), 400
+    content = data["content"].strip()
     label = data.get("label", "").strip()
+    if len(content) > 2000 or len(label) > 20:
+        return jsonify({"error": "Use at most 2000 characters for messages and 20 for nicknames."}), 400
 
     if not content:
         return jsonify({"error": "empty"}), 400
@@ -349,7 +356,7 @@ Respond with only the single word."""
             elif "SAFE" in raw:
                 classification = "SAFE"
     except Exception as e:
-        print("CLASSIFIER ERROR:", str(e))
+        print("CLASSIFIER ERROR:", type(e).__name__)
         classification = "UNCLEAR"
 
     # always run keyword fallback as a second layer, regardless of AI result
@@ -365,7 +372,7 @@ Respond with only the single word."""
 
     # if AI was unclear AND it's a longer message, err on the side of caution
     if classification == "UNCLEAR":
-        classification = "SAFE"  # short benign messages won't get stuck
+        return jsonify({"error": "moderation unavailable", "message": "We couldn't check this message right now. It has not been posted. Please try again, or use the support links."}), 503
 
     if classification in ["SEVERE", "BLOCKED"]:
         return jsonify({
@@ -392,29 +399,14 @@ Respond with only the single word."""
 
     return jsonify({"status": "sent", "is_crisis": is_crisis})
 @app.route("/doctor")
-@login_required
 def doctor_page():
     return render_template("doctor.html")
 
 @app.route("/api/doctor/request", methods=["POST"])
 @login_required
 def doctor_request():
-    user_id = session.get("user_id")
-    data = request.get_json()
-    message = data.get("message", "").strip()
-    mood_summary = data.get("mood_summary", "").strip()
-
-    if not message:
-        return jsonify({"error": "empty"}), 400
-
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO doctor_requests (user_id, mood_summary, message) VALUES (?, ?, ?)",
-        (user_id, mood_summary, message)
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "sent"})
+    # No staffed counselling service exists yet; do not collect unmonitored requests.
+    return jsonify({"error": "Counsellor requests are unavailable. Contact a support provider directly at /doctor."}), 503
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

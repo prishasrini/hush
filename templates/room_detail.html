@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hush — Room</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -221,14 +222,15 @@
   </div>
 
   <script>
-    const roomName = "{{ room_name }}";
+    const roomName = {{ room_name | tojson }};
     const box = document.getElementById('messages-box');
     const input = document.getElementById('msg-input');
     const labelInput = document.getElementById('label-input');
     const noticeAnchor = document.getElementById('notice-anchor');
-    let myUserId = null;
+
     let isBlocked = false;
-    let lastMessageCount = -1;
+    let lastMessageSignature = '';
+    let sending = false;
 
     const adjectives = ["quiet", "gentle", "lost", "tired", "hopeful", "curious", "calm", "wandering"];
     const nouns = ["owl", "moon", "river", "fox", "star", "cloud", "wolf", "petal"];
@@ -248,18 +250,15 @@
       return `${hours}:${minutes} ${ampm}`;
     }
 
-    async function getMyId() {
-      const res = await fetch('/api/me');
-      const data = await res.json();
-      myUserId = data.user_id;
-    }
 
     async function loadMessages() {
       const res = await fetch(`/api/rooms/${roomName}/messages`);
+      if (!res.ok) throw new Error('Unable to load messages');
       const messages = await res.json();
 
-      if (messages.length === lastMessageCount) return;
-      lastMessageCount = messages.length;
+      const signature = JSON.stringify(messages);
+      if (signature === lastMessageSignature) return;
+      lastMessageSignature = signature;
 
       if (messages.length === 0) {
         box.innerHTML = '<div class="empty-state" id="empty-state">no messages yet — be the first to share 🤍</div>';
@@ -268,16 +267,19 @@
 
       box.innerHTML = '';
       messages.forEach(m => {
-        const isMine = m.user_id === myUserId;
+        const isMine = m.is_mine;
         const wrap = document.createElement('div');
         wrap.className = isMine ? 'msg-wrap mine' : 'msg-wrap';
 
         const meta = document.createElement('div');
         meta.className = 'msg-meta';
-        meta.innerHTML = `
-          <span class="msg-label">${isMine ? 'you' : m.label}</span>
-          <span class="msg-time">${formatTime(m.created_at)}</span>
-        `;
+        const author = document.createElement('span');
+        author.className = 'msg-label';
+        author.textContent = isMine ? 'you' : m.label;
+        const time = document.createElement('span');
+        time.className = 'msg-time';
+        time.textContent = formatTime(m.created_at);
+        meta.append(author, time);
 
         const bubble = document.createElement('div');
         bubble.className = 'msg';
@@ -292,7 +294,9 @@
 
     async function sendMsg() {
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || sending) return;
+      sending = true;
+      try {
 
       const label = labelInput.value.trim();
 
@@ -310,15 +314,19 @@
         return;
       }
 
+      if (!res.ok) throw new Error(data.message || data.error || 'Message could not be sent');
       input.value = '';
       removeBlockedMessage();
-      lastMessageCount = -1;
+      lastMessageSignature = '';
 
       if (data.is_crisis) {
         showCrisisNudge();
       }
 
-      loadMessages();
+      await loadMessages();
+      } catch (error) {
+        showBlockedMessage(error.message || 'Connection interrupted. Your message is still here.');
+      } finally { sending = false; }
     }
 
     function showBlockedMessage(message) {
@@ -352,10 +360,9 @@
       if (isBlocked) removeBlockedMessage();
     });
 
-    getMyId();
     randomizeLabel();
-    loadMessages();
-    setInterval(loadMessages, 3000);
+    loadMessages().catch(() => showBlockedMessage('Messages could not load. Reconnecting…'));
+    setInterval(() => loadMessages().catch(() => showBlockedMessage('Messages could not load. Reconnecting…')), 3000);
   </script>
 </body>
 </html>
