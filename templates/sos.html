@@ -282,6 +282,37 @@
     .breath-scene.still .constellation-line { transition:none; }
     @media(prefers-reduced-motion:reduce) { .constellation-star::after { animation:none !important; } }
     @media(max-width:400px) { #breathe-circle { width:136px; height:136px; } .ring-text { font-size:.78rem; } }
+
+    .ground-intro { text-align:center; margin-bottom:20px; }
+    .ground-intro h2 { font-size:1.3rem; font-weight:400; color:#e2d8ff; margin-bottom:12px; }
+    .ground-intro p,.ground-note { color:#b9b9d1; line-height:1.7; font-size:.88rem; }
+    .ground-scene { position:relative; isolation:isolate; width:100%; aspect-ratio:1.35; overflow:hidden; border-radius:24px; border:1px solid #45415d; background:radial-gradient(ellipse at 40% 20%,#343352,#1b2136 65%,#151c2d); }
+    .ground-landscape { position:absolute; inset:0; pointer-events:none; }
+    .ground-shore { position:absolute; inset:24% -15% -25%; transform:rotate(-8deg); border-radius:50%; background:radial-gradient(ellipse at 55% 25%,#58647355,#293643 60%); border-top:1px solid #778b9430; }
+    .ground-water { position:absolute; top:9%; right:-16%; width:74%; height:45%; border-radius:50%; transform:rotate(-10deg); background:linear-gradient(140deg,#657ca022,#607b9755,#233e5322); border-top:1px solid #8babd040; }
+    .ground-scene-caption { position:absolute; bottom:12px; left:12px; right:12px; text-align:center; color:#c4c9d9; font-size:.75rem; letter-spacing:.5px; pointer-events:none; }
+    .ground-stone { position:absolute; transform:translate(-50%,-50%); width:58px; height:60px; background:none; border:none; padding:8px; cursor:pointer; border-radius:18px; }
+    .ground-stone[hidden],.ground-actions button[hidden] { display:none; }
+    .stone-body { display:block; width:100%; height:100%; border-radius:48% 55% 42% 52%; background:radial-gradient(ellipse at 35% 25%,#afbcd2,#697a9a 45%,#344052); box-shadow:inset -4px -6px 8px #1a273766,0 8px 12px #0a101e66,0 0 13px #abb6ee22; }
+    .ground-stone:nth-of-type(3n) .stone-body { background:radial-gradient(ellipse at 35% 25%,#b8b0d2,#82779f 45%,#493e62); }
+    .ground-stone:nth-of-type(3n+1) .stone-body { background:radial-gradient(ellipse at 35% 25%,#a5c6bd,#6b9c97 45%,#365954); }
+    .ground-stone::after { content:""; position:absolute; inset:2px; border:1px solid #bfc4ff88; border-radius:50%; opacity:0; pointer-events:none; }
+    .ground-stone.glow::after { animation:stone-glow 2.4s ease-out; }
+    @keyframes stone-glow { 0% { opacity:0;transform:scale(.6); } 30% { opacity:.65; } 100% { opacity:0;transform:scale(1.2); } }
+    .ground-prompt-card { padding:24px; background:#1a1a2e; border:1px solid #3d3853; border-radius:18px; margin-top:20px; }
+    #ground-sense { text-transform:uppercase; letter-spacing:1.5px; color:#c4b5fd; font-size:.75rem; margin-bottom:12px; }
+    #ground-prompt { color:#eee8ff; font-weight:400; font-size:1.15rem; line-height:1.5; margin-bottom:12px; }
+    #ground-detail { color:#b9b9d1; font-size:.85rem; line-height:1.7; }
+    .ground-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+    .ground-primary,.ground-secondary { padding:12px 16px; min-height:44px; border-radius:12px; cursor:pointer; }
+    .ground-primary { background:#baa8fa; color:#191329; border:1px solid #baa8fa; }
+    .ground-secondary { background:transparent; color:#d3c8f5; border:1px solid #75648e; }
+    .ground-note { text-align:center; font-size:.8rem; margin:20px 8px 14px; }
+    .ground-motion { display:flex; gap:10px; align-items:center; justify-content:center; color:#c7c7de; font-size:.85rem; }
+    .ground-motion input { accent-color:#b5a0ff; width:18px; height:18px; }
+    .ground-scene.still .ground-stone::after { animation:none; }
+    @media(prefers-reduced-motion:reduce) { .ground-stone::after { animation:none !important; } }
+    @media(max-width:400px) { .ground-prompt-card { padding:20px; } .ground-stone { width:50px; height:52px; } }
   </style>
 </head>
 <body>
@@ -340,53 +371,29 @@
   </div>
 
   <!-- GROUNDING -->
-  <div class="section" id="tab-ground">
-    <div class="ground-step">
-      <div class="sense">👁️ see — name 5 things</div>
-      <div class="instruction">look around. tap each thing you can see right now.</div>
-      <div class="items">
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 1</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 2</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 3</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 4</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">thing 5</button>
+  <section class="section" id="tab-ground" aria-label="Grounding with your surroundings">
+    <div class="ground-intro"><h2>a small moment, right here.</h2><p>Notice something around you, then tap “noticed it” to place a stone. You can change any prompt or stop anytime.</p></div>
+    <div class="ground-scene" id="ground-scene">
+      <div class="ground-landscape" aria-hidden="true"><span class="ground-shore"></span><span class="ground-water"></span></div>
+      <button type="button" class="ground-stone" style="left:18%;top:62%;--stone-tone:0" aria-label="Let stone 1 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:35%;top:67%;--stone-tone:1" aria-label="Let stone 2 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:53%;top:61%;--stone-tone:2" aria-label="Let stone 3 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:72%;top:68%;--stone-tone:0" aria-label="Let stone 4 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:84%;top:53%;--stone-tone:1" aria-label="Let stone 5 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:21%;top:43%;--stone-tone:2" aria-label="Let stone 6 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:39%;top:45%;--stone-tone:0" aria-label="Let stone 7 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:57%;top:42%;--stone-tone:1" aria-label="Let stone 8 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:72%;top:39%;--stone-tone:2" aria-label="Let stone 9 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:48%;top:80%;--stone-tone:0" aria-label="Let stone 10 glow" hidden><span class="stone-body" aria-hidden="true"></span></button>
+      <p class="ground-scene-caption">a place for your little moments</p>
+    </div>
+    <div class="ground-prompt-card">
+      <div role="status" aria-atomic="true">
+        <p id="ground-sense">look around</p>
+        <h3 id="ground-prompt">Notice something with a colour you like.</h3>
+        <p id="ground-detail">Let your eyes rest on it for a moment. You do not have to name it here.</p>
+      </div>
+      <div class="ground-actions">
+        <button type="button" class="ground-primary" id="ground-notice">noticed it</button>
+        <button type="button" class="ground-secondary" id="ground-alternate">another prompt</button>
+        <button type="button" class="ground-secondary" id="ground-rest">rest here</button>
+        <button type="button" class="ground-primary" id="ground-restart" hidden>another grounding moment</button>
       </div>
     </div>
-    <div class="ground-step">
-      <div class="sense">👂 hear — name 4 things</div>
-      <div class="instruction">close your eyes for a moment. what do you hear?</div>
-      <div class="items">
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 1</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 2</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 3</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">sound 4</button>
-      </div>
-    </div>
-    <div class="ground-step">
-      <div class="sense">🤚 touch — name 3 things</div>
-      <div class="instruction">what can you physically feel right now?</div>
-      <div class="items">
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 1</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 2</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">touch 3</button>
-      </div>
-    </div>
-    <div class="ground-step">
-      <div class="sense">👃 smell — name 2 things</div>
-      <div class="instruction">breathe in. what do you smell?</div>
-      <div class="items">
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">smell 1</button>
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">smell 2</button>
-      </div>
-    </div>
-    <div class="ground-step">
-      <div class="sense">👅 taste — name 1 thing</div>
-      <div class="instruction">what do you taste right now?</div>
-      <div class="items">
-        <button class="ground-item" aria-pressed="false" onclick="this.classList.toggle('checked'); this.setAttribute('aria-pressed', this.classList.contains('checked'))">taste 1</button>
-      </div>
-    </div>
-  </div>
+    <p class="ground-note">Look away from the screen whenever you like. Your stones stay while this page is open; your observations are not recorded or sent anywhere.</p>
+    <label class="ground-motion"><input type="checkbox" id="ground-still"> still mode</label>
+  </section>
 
   <!-- SOUNDS -->
   <div class="section" id="tab-sounds">
@@ -443,6 +450,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='breathing.js') }}"></script>
+  <script src="{{ url_for('static', filename='grounding.js') }}"></script>
   <script>
     function showTab(name, el) {
       stopBreath();

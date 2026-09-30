@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {GroundingMoment}=require('./static/grounding.js');
+const moment=new GroundingMoment();
+for(let i=0;i<30;i++) moment.alternate();
+assert.equal(moment.promptIndex,0);
+moment.resting=true; assert.equal(moment.notice(),false); moment.alternate(); assert.equal(moment.promptIndex,0);
+moment.resting=false;
+for(let i=0;i<5;i++) assert.equal(moment.notice(),true);
+assert.equal(moment.complete,true);
+assert.equal(moment.notice(),false);
+console.log('Grounding checks passed: alternate prompts wrap, resting blocks progress, completion is bounded.');
