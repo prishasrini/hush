@@ -97,6 +97,74 @@ class DatabaseTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 database.get_db()
 
+    def test_deletion_is_scoped_and_requires_csrf(self):
+        import app
+        database.init_db()
+        conn = database.get_db()
+        for user in ("alice", "bob"):
+            conn.execute("INSERT INTO moods (user_id, mood, note) VALUES (?, ?, ?)", (user, "okay", "private note"))
+        conn.commit()
+        conn.close()
+        client = app.app.test_client()
+        self.assertEqual(client.post("/mood/history/delete").status_code, 302)
+        with client.session_transaction() as state:
+            state["user_id"] = "alice"
+        page = client.get("/dashboard")
+        self.assertIn(b"Delete my mood history", page.data)
+        with client.session_transaction() as state:
+            token = state["mood_delete_token"]
+        self.assertEqual(client.get("/mood/history/delete").status_code, 405)
+        self.assertEqual(client.post("/mood/history/delete", data={"csrf_token": "wrong", "user_id": "bob"}).status_code, 403)
+        conn = database.get_db()
+        self.assertEqual(len(conn.execute("SELECT * FROM moods").fetchall()), 2)
+        conn.close()
+        self.assertEqual(client.post("/mood/history/delete", data={"csrf_token": token, "user_id": "bob"}).status_code, 302)
+        conn = database.get_db()
+        rows = conn.execute("SELECT user_id FROM moods").fetchall()
+        self.assertEqual([row["user_id"] for row in rows], ["bob"])
+        conn.close()
+        self.assertEqual(client.post("/mood/history/delete", data={"csrf_token": token}).status_code, 403)
+
+    def test_chat_replies_without_saving_new_messages(self):
+        import app
+        import urllib.request
+        database.init_db()
+        conn = database.get_db()
+        conn.execute("INSERT INTO messages (user_id, role, content) VALUES (?, ?, ?)", ("alice", "user", "older saved chat"))
+        conn.commit()
+        conn.close()
+        client = app.app.test_client()
+        with client.session_transaction() as state:
+            state["user_id"] = "alice"
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.read.return_value = b'{"choices":[{"message":{"content":"test reply"}}]}'
+        with patch.object(urllib.request, "urlopen", return_value=response):
+            result = client.post("/api/chat", json={"messages": [{"role": "user", "content": "new private chat"}]})
+        self.assertEqual(result.get_json()["reply"], "test reply")
+        conn = database.get_db()
+        rows = conn.execute("SELECT content FROM messages").fetchall()
+        self.assertEqual([row["content"] for row in rows], ["older saved chat"])
+        conn.close()
+
+    def test_old_public_secret_cannot_sign_in(self):
+        import app
+        from flask import Flask
+        from itsdangerous import BadSignature
+        old_app = Flask("old")
+        old_app.secret_key = "hush-secret-key"
+        old_serializer = old_app.session_interface.get_signing_serializer(old_app)
+        forged = old_serializer.dumps({"user_id": "alice"})
+        new_serializer = app.app.session_interface.get_signing_serializer(app.app)
+        with self.assertRaises(BadSignature):
+            new_serializer.loads(forged)
+        self.assertEqual(app.app.config["SESSION_COOKIE_SAMESITE"], "Lax")
+        self.assertTrue(app.app.config["SESSION_COOKIE_HTTPONLY"])
+        page = app.app.test_client().get("/privacy")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"administrators can access", page.data)
+
 
 if __name__ == "__main__":
     unittest.main()

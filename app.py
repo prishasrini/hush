@@ -3,12 +3,23 @@ from database import get_db, init_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import uuid
+import secrets
 import os
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "hush-secret-key"
+session_secret = os.environ.get("SECRET_KEY", "")
+if session_secret and (len(session_secret) < 32 or session_secret == "hush-secret-key"):
+    raise RuntimeError("SECRET_KEY must be a private random value of at least 32 characters")
+if not session_secret and os.environ.get("RENDER"):
+    raise RuntimeError("Set SECRET_KEY in Render environment settings before deploying")
+app.secret_key = session_secret or secrets.token_hex(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
+)
 init_db()
 
 def login_required(f):
@@ -90,7 +101,34 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    if "mood_delete_token" not in session:
+        session["mood_delete_token"] = secrets.token_urlsafe(32)
+    return render_template("dashboard.html", delete_token=session["mood_delete_token"])
+
+
+@app.route("/privacy")
+def privacy_page():
+    return render_template("privacy.html")
+
+
+@app.route("/mood/history/delete", methods=["POST"])
+@login_required
+def delete_mood_history():
+    expected = session.get("mood_delete_token", "")
+    supplied = request.form.get("csrf_token", "")
+    if not expected or not secrets.compare_digest(expected, supplied):
+        return "This request expired. Reload your dashboard and try again.", 403
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM moods WHERE user_id = ?", (session["user_id"],))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    session["mood_delete_token"] = secrets.token_urlsafe(32)
+    return redirect(url_for("dashboard", mood_deleted="1"))
 
 @app.route("/api/me")
 @login_required
@@ -138,19 +176,10 @@ def chat_page():
 @app.route("/api/chat", methods=["POST"])
 @login_required
 def chat():
-    user_id = session.get("user_id")
     data = request.get_json()
     messages = data.get("messages", [])
 
-    conn = get_db()
-    if messages:
-        last = messages[-1]
-        conn.execute(
-            "INSERT INTO messages (user_id, role, content) VALUES (?, ?, ?)",
-            (user_id, last["role"], last["content"])
-        )
-        conn.commit()
-    conn.close()
+    # Conversation context is used for this reply, never persisted by Hush.
 
     import urllib.request
     import json
@@ -225,10 +254,10 @@ Respond in the same language the user writes or speaks in."""
             with urllib.request.urlopen(req, timeout=15) as response:
                 result = json.loads(response.read().decode("utf-8"))
                 reply = result["choices"][0]["message"]["content"]
-                print(f"✓ responded using {model}")
+                print(f"Juno responded using {model}")
                 break
         except Exception as e:
-            print(f"✗ {model} failed: {str(e)}")
+            print(f"Juno model {model} failed: {type(e).__name__}")
             continue
 
     if not reply:
