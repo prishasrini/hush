@@ -313,6 +313,35 @@
     .ground-scene.still .ground-stone::after { animation:none; }
     @media(prefers-reduced-motion:reduce) { .ground-stone::after { animation:none !important; } }
     @media(max-width:400px) { .ground-prompt-card { padding:20px; } .ground-stone { width:50px; height:52px; } }
+
+    .paint-prompt { margin-top:0; }
+    .paint-palette { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px; }
+    .paint-colour { width:44px; height:44px; padding:5px; border:2px solid transparent; background:transparent; border-radius:50%; cursor:pointer; }
+    .paint-colour span { display:block; width:100%; height:100%; background:var(--swatch); border-radius:50%; }
+    .paint-colour[aria-pressed="true"] { border-color:#eee6ff; }
+    .paint-caption { text-align:center; color:#bfc5dc; font-size:.8rem; line-height:1.6; margin:10px 8px; }
+    .paint-surface { position:relative; border:1px solid #55516f; border-radius:24px; overflow:hidden; margin-top:16px; background:#151c2f; }
+    #ground-canvas { display:block; width:100%; aspect-ratio:1.5; touch-action:none; cursor:crosshair; user-select:none; }
+    .paint-hint { position:absolute; bottom:16px; left:12px; right:12px; color:#bec5dd; font-size:.8rem; text-align:center; pointer-events:none; }
+    .paint-hint[hidden] { display:none; }
+    .paint-tools { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+    .paint-actions { justify-content:center; margin-top:20px; }
+    @media(max-width:400px) { .paint-palette { gap:6px; } }
+
+    .guided-prompt { margin-top:0; }
+    .guided-tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .guided-tools button { font-size:.8rem; }
+    #ground-easy[aria-pressed="true"] { border-color:#d5c8f9; background:#302847; }
+    .notice-surface { border:1px solid #55516f; border-radius:24px; overflow:hidden; margin-top:20px; }
+    #notice-scene { width:100%; display:block; }
+    .notice-layer { transition:opacity 1.8s ease,stroke 1.8s ease; }
+    .notice-surface.still .notice-layer { transition:none; }
+    .guided-options { background:#1a1a2e; border:1px solid #393451; border-radius:16px; padding:16px; margin-top:12px; }
+    .guided-options summary { cursor:pointer; color:#d3c8f5; min-height:28px; }
+    .guided-options .ground-motion { margin-top:16px; }
+    button:focus-visible,summary:focus-visible { outline:2px solid #e0d7ff; outline-offset:4px; }
+    .guided-tools button[hidden],.ground-actions button[hidden] { display:none; }
+    @media(prefers-reduced-motion:reduce) { .notice-layer { transition:none !important; } }
   </style>
 </head>
 <body>
@@ -371,28 +400,37 @@
   </div>
 
   <!-- GROUNDING -->
-  <section class="section" id="tab-ground" aria-label="Grounding with your surroundings">
-    <div class="ground-intro"><h2>a small moment, right here.</h2><p>Notice something around you, then tap “noticed it” to place a stone. You can change any prompt or stop anytime.</p></div>
-    <div class="ground-scene" id="ground-scene">
-      <div class="ground-landscape" aria-hidden="true"><span class="ground-shore"></span><span class="ground-water"></span></div>
-      <button type="button" class="ground-stone" style="left:18%;top:62%;--stone-tone:0" aria-label="Let stone 1 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:35%;top:67%;--stone-tone:1" aria-label="Let stone 2 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:53%;top:61%;--stone-tone:2" aria-label="Let stone 3 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:72%;top:68%;--stone-tone:0" aria-label="Let stone 4 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:84%;top:53%;--stone-tone:1" aria-label="Let stone 5 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:21%;top:43%;--stone-tone:2" aria-label="Let stone 6 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:39%;top:45%;--stone-tone:0" aria-label="Let stone 7 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:57%;top:42%;--stone-tone:1" aria-label="Let stone 8 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:72%;top:39%;--stone-tone:2" aria-label="Let stone 9 glow" hidden><span class="stone-body" aria-hidden="true"></span></button><button type="button" class="ground-stone" style="left:48%;top:80%;--stone-tone:0" aria-label="Let stone 10 glow" hidden><span class="stone-body" aria-hidden="true"></span></button>
-      <p class="ground-scene-caption">a place for your little moments</p>
+  <section class="section" id="tab-ground" aria-label="Guided grounding">
+    <div class="ground-intro"><h2>a little closer to here.</h2><p>One small thing around you. Take as long as you like.</p></div>
+    <div class="ground-prompt-card guided-prompt"><div role="status" aria-atomic="true"><p id="ground-sense">look around</p><h3 id="ground-prompt">Notice one colour near you.</h3><p id="ground-detail">Anything nearby is enough. You do not need to name it.</p></div>
+    <div class="notice-surface" id="notice-surface">
+      <svg id="notice-scene" viewBox="0 0 600 340" role="img" aria-labelledby="notice-title notice-description">
+        <title id="notice-title">A quiet landscape</title><desc id="notice-description">A soft sky, a shoreline and a pond. The scene responds when you notice something.</desc>
+        <defs><linearGradient id="notice-sky" x2="0" y2="1"><stop stop-color="#34364f"/><stop offset="1" stop-color="#78718a"/></linearGradient><radialGradient id="notice-wash"><stop id="notice-colour" stop-color="#bca8f5" stop-opacity=".65"/><stop offset="1" stop-color="#bca8f5" stop-opacity="0"/></radialGradient><linearGradient id="notice-pond" x2="0" y2="1"><stop stop-color="#688c9c"/><stop offset="1" stop-color="#354b66"/></linearGradient></defs>
+        <rect width="600" height="340" fill="url(#notice-sky)"/>
+        <ellipse id="notice-glow" class="notice-layer" cx="290" cy="100" rx="340" ry="220" fill="url(#notice-wash)" opacity=".15"/>
+        <circle cx="450" cy="75" r="25" fill="#eadedb" opacity=".65"/>
+        <path d="M0 190 Q100 125 205 172 T420 152 T600 182 V340 H0Z" fill="#526270"/>
+        <path d="M0 235 Q120 175 270 230 T600 210 V340 H0Z" fill="#728379"/>
+        <path d="M135 270 Q270 215 455 251 T590 320 Q375 366 135 310 Q90 289 135 270Z" fill="url(#notice-pond)"/>
+        <path id="notice-shore" class="notice-layer" d="M8 252 Q115 190 270 244 T590 226" fill="none" stroke="#dbcfb3" stroke-width="5" stroke-linecap="round" opacity=".12"/>
+        <g id="notice-ripples" class="notice-layer" fill="none" stroke="#c3d8df" stroke-width="2" opacity=".1"><ellipse cx="360" cy="279" rx="42" ry="7"/><ellipse cx="360" cy="279" rx="72" ry="13"/><ellipse cx="360" cy="279" rx="102" ry="20"/></g>
+        <g fill="#d1d1bd" opacity=".45"><path d="M40 330 Q35 290 58 276 Q50 312 40 330Z"/><path d="M56 337 Q59 303 82 296 Q69 325 56 337Z"/><path d="M540 337 Q534 309 557 290 Q552 322 540 337Z"/></g>
+      </svg>
     </div>
-    <div class="ground-prompt-card">
-      <div role="status" aria-atomic="true">
-        <p id="ground-sense">look around</p>
-        <h3 id="ground-prompt">Notice something with a colour you like.</h3>
-        <p id="ground-detail">Let your eyes rest on it for a moment. You do not have to name it here.</p>
-      </div>
-      <div class="ground-actions">
-        <button type="button" class="ground-primary" id="ground-notice">noticed it</button>
-        <button type="button" class="ground-secondary" id="ground-alternate">another prompt</button>
-        <button type="button" class="ground-secondary" id="ground-rest">rest here</button>
-        <button type="button" class="ground-primary" id="ground-restart" hidden>another grounding moment</button>
-      </div>
+    <p class="paint-caption" id="notice-feedback" role="status">The scene can wait. Look away whenever you like.</p>
+      <div class="ground-actions"><button type="button" class="ground-primary" id="ground-notice">I noticed something</button><button type="button" class="ground-secondary" id="ground-alternate">skip this prompt</button><button type="button" class="ground-primary" id="ground-restart" hidden>notice something else</button></div>
+      <div class="guided-tools"><button type="button" class="ground-secondary" id="ground-easy" aria-pressed="false">make this easier</button><button type="button" class="ground-secondary" id="ground-rest">pause here</button><button type="button" class="ground-secondary" id="ground-listen" hidden>read this prompt</button></div>
     </div>
-    <p class="ground-note">Look away from the screen whenever you like. Your stones stay while this page is open; your observations are not recorded or sent anywhere.</p>
-    <label class="ground-motion"><input type="checkbox" id="ground-still"> still mode</label>
+    <details class="guided-options"><summary>appearance &amp; optional colour</summary><label class="ground-motion"><input type="checkbox" id="ground-still"> still scene</label><p class="paint-caption">If you want, choose a colour for the sky. No matching needed.</p><div class="paint-palette" id="notice-palette" role="group" aria-label="Optional sky colour"></div></details>
+    <details class="guided-options" id="ground-painting"><summary>feel like painting instead?</summary><p class="paint-caption">An optional space to play. The grounding prompts do not need any drawing.</p>
+    <div class="paint-palette" role="group" aria-label="Choose a paint colour"><button type="button" class="paint-colour" style="--swatch:#bca8f5" data-colour="#bca8f5" data-name="lavender" aria-label="lavender" aria-pressed="true"><span aria-hidden="true"></span></button><button type="button" class="paint-colour" style="--swatch:#91bdea" data-colour="#91bdea" data-name="sky blue" aria-label="sky blue" aria-pressed="false"><span aria-hidden="true"></span></button><button type="button" class="paint-colour" style="--swatch:#a0ccb5" data-colour="#a0ccb5" data-name="sage green" aria-label="sage green" aria-pressed="false"><span aria-hidden="true"></span></button><button type="button" class="paint-colour" style="--swatch:#edb99e" data-colour="#edb99e" data-name="warm peach" aria-label="warm peach" aria-pressed="false"><span aria-hidden="true"></span></button><button type="button" class="paint-colour" style="--swatch:#e4cf8d" data-colour="#e4cf8d" data-name="soft gold" aria-label="soft gold" aria-pressed="false"><span aria-hidden="true"></span></button><button type="button" class="paint-colour" style="--swatch:#c1c8d7" data-colour="#c1c8d7" data-name="silver" aria-label="silver" aria-pressed="false"><span aria-hidden="true"></span></button></div>
+    <p id="paint-colour-name" class="paint-caption" role="status">lavender selected</p>
+    <div class="paint-surface"><svg id="ground-canvas" viewBox="0 0 600 400" role="img" aria-label="Your grounding artwork. Drag to paint, or use the paint a ribbon button."><defs><radialGradient id="paint-bg"><stop offset="0" stop-color="#252a45"/><stop offset="1" stop-color="#151c2f"/></radialGradient></defs><rect width="600" height="400" fill="url(#paint-bg)"/><g id="paint-strokes" fill="none" stroke-linecap="round" stroke-linejoin="round"></g></svg><span class="paint-hint" id="paint-hint">drag here to leave a soft ribbon</span></div>
+    <div class="paint-tools"><button type="button" class="ground-secondary" id="paint-ribbon">paint a ribbon</button><button type="button" class="ground-secondary" id="paint-undo" disabled>undo last mark</button></div>
+    <p class="paint-caption" id="paint-status" role="status">Draw freely, or add a ribbon with the button. Nothing needs to look a certain way.</p>
+    </details>
+    <p class="ground-note">Stop whenever you want. Observations and drawings stay only on this page and disappear when it reloads. No camera or microphone is used.</p>
   </section>
 
   <!-- SOUNDS -->
